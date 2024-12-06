@@ -60,25 +60,33 @@ public class TroyTitansDeepTeleop extends LinearOpMode
     double wristUpPosition;
 
     double wristDeadBand;
+    double wristPower;
+    double subWristPower;
     double wristDropPosition;
     double wristDownPosition;
     int gripperClosedPosition;
     int gripperOpenPosition;
     double subIntakeIn;
+    float manualArmPower;
     int subIntakeOut;
     double subWristUp;
     double subWristDown;
+    boolean manualMode;
     boolean autoSlider;
     boolean autoSubSlider;
     double running;
+    int sliderDelay;
+    boolean turnOffSlider;
 
+    double armManualDeadband;
+    int armShutdownThreshold;
     private void init_variables() {
         // Slider Position
         sliderhangposition = 1400;
         // Vertical Slider Position
         SliderClosePosition = 0;
         SliderIntakePosition = 425;
-        SliderExtendPosition = 3600;
+        SliderExtendPosition = 3350;
 
         SliderSubIntakePosition = 1000;
         // Wrist on Vertical Slider Position
@@ -87,6 +95,8 @@ public class TroyTitansDeepTeleop extends LinearOpMode
         wristDownPosition = 0;  //Neeed to add a button
         wristDropPosition = 0.7;
         wristDeadBand = 0.03;
+        wristPower = 0;
+        subWristPower = 0;
         // Gripper on Vertical Slider Position
         gripperClosedPosition = 1;
         gripperOpenPosition = 0;
@@ -101,6 +111,7 @@ public class TroyTitansDeepTeleop extends LinearOpMode
         subWristDown = 1;
         subWristUp = 0;
         // Initiation
+        manualMode = false;
         autoSlider = false;
         autoSubSlider = false;
         running = 0;
@@ -109,7 +120,9 @@ public class TroyTitansDeepTeleop extends LinearOpMode
         sliderRunTime = new ElapsedTime();
         sliderSubRunTime = new ElapsedTime();
         sliderTimer = 2000;
+        sliderDelay = 800;
 
+        armManualDeadband = 0.03;
     }
     // get an instance of the "Robot" class.
     SimplifiedOdometryRobot robot = new SimplifiedOdometryRobot(this);
@@ -117,7 +130,7 @@ public class TroyTitansDeepTeleop extends LinearOpMode
     @Override public void runOpMode()
     {
         // Initialize the drive hardware & Turn on telemetry
-        robot.initialize(true,true);
+        robot.initialize(true);
 
         slider = hardwareMap.get(DcMotor.class, "slider");
         gripper = hardwareMap.get(Servo.class, "gripper");
@@ -127,7 +140,7 @@ public class TroyTitansDeepTeleop extends LinearOpMode
         sliderSub = hardwareMap.get(DcMotor.class, "sliderSub");
         armRight = hardwareMap.get(DcMotor.class, "axial");
         armLeft = hardwareMap.get(DcMotor.class, "lateral");
-        //    touchslider = hardwareMap.get(TouchSensor.class, "touchslider");
+        touchslider = hardwareMap.get(TouchSensor.class, "touchslider");
 
 
         init_variables();
@@ -149,25 +162,21 @@ public class TroyTitansDeepTeleop extends LinearOpMode
             gamepadControls();
             runtime.reset();
             subRuntime.reset();
-            /*if (touchslider.isPressed()) {
+            if (touchslider.isPressed())
                 slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                // telemetry.addData("Sensor pressed", slider.getCurrentPosition());
-            }*/
             //Turn off slider only if its not moving automatically.
             //Automatic movements stops at target position already.
-            if(!autoSlider) {
-                slider.setPower(0);
-            }
-            else if(autoSlider && (sliderRunTime.milliseconds() >= sliderTimer)) {
+            if(autoSlider && (sliderRunTime.milliseconds() >= sliderTimer)) {
+                slider.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
                 slider.setPower(0);
                 sliderRunTime.reset();
                 autoSlider = false;
-                sliderTimer =2000;
+                sliderTimer = 2000;
             }
 
-            if(!autoSubSlider)
+            if(slider.getZeroPowerBehavior().equals(DcMotor.ZeroPowerBehavior.BRAKE))
             {
-                sliderSub.setPower(0);
+                telemetry.addData("inside IF ", slider.getZeroPowerBehavior());
             }
             else if (autoSubSlider && (sliderSubRunTime.milliseconds() >= 2000))
             {
@@ -256,8 +265,8 @@ public class TroyTitansDeepTeleop extends LinearOpMode
     }
 
     private void arm_process(){
-        double armOpenPowwer = 0.8;
-        double armClosePower = -0.8;
+        double armOpenPowwer = 0.6;
+        double armClosePower = -0.6;
         if(gamepad2.left_trigger > 0)
         {
             armLeft.setPower(armOpenPowwer);
@@ -290,11 +299,14 @@ public class TroyTitansDeepTeleop extends LinearOpMode
     }
 
     private void Slider_init() {
-        slider.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         slider.setDirection(DcMotor.Direction.FORWARD);
         slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        slider.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         slider.setPower(0);
+        // slider.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
     private void SliderSub_init() {
@@ -324,7 +336,7 @@ public class TroyTitansDeepTeleop extends LinearOpMode
 
         runtime.reset();
         if (gamepad2.left_stick_y != 0 ) {
-            //slider.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            slider.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             slider.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             slider.setPower(-gamepad2.left_stick_y);
             autoSlider = false;
@@ -334,10 +346,8 @@ public class TroyTitansDeepTeleop extends LinearOpMode
             slider.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             slider.setPower(0);
-        /*    if (touchslider.isPressed()) {
+            if (touchslider.isPressed())
                 slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                //telemetry.addData("Sensor pressed manual", slider.getCurrentPosition());
-            }*/
         }
 
     }
@@ -405,18 +415,16 @@ public class TroyTitansDeepTeleop extends LinearOpMode
         }  else if (gamepad2.y) {
             //Drop Sample at high basket
             //increasing the slider timer since zero power behaviour for break is not working.
-            sliderTimer = 3000;
-            setSliderPosition(SliderExtendPosition);
+            sliderTimer = 15000;
             wrist.setPosition(wristDropPosition);
+            setSliderPosition(SliderExtendPosition);
             running = 1;
         } else if (gamepad2.x) {
             //Sample Picking Position
             //increasing the slider timer since zero power behaviour for break is not working.
-            /*sliderTimer = 5000;
+            sliderTimer = 5000;
             setSliderPosition(sliderhangposition);
-            running = 1;*/
-            gripper.setPosition(gripperOpenPosition);
-            wrist.setPosition(wristDownPosition);
+            running = 1;
         } else if (gamepad2.left_bumper) {
             //Pick Sample
             gripper.setPosition(gripperOpenPosition);
@@ -428,8 +436,7 @@ public class TroyTitansDeepTeleop extends LinearOpMode
             subIntake.setPosition(subIntakeIn);
         } else if (gamepad2.dpad_up) {
             subWrist.setPosition(subWristUp);
-            //subIntake.setPosition(subIntakeOff);
-            subIntake.setPosition(subIntakeIn);
+            subIntake.setPosition(subIntakeOff);
         }  else if (gamepad2.dpad_left) {
             subIntake.setPosition(subIntakeOff);
         } else if (gamepad2.dpad_right) {
@@ -462,11 +469,11 @@ public class TroyTitansDeepTeleop extends LinearOpMode
         } else if (gamepad1.right_bumper) {
             gripper.setPosition(gripperClosedPosition);
         }*/
-        /*if (gamepad2.left_stick_button) {
+        if (gamepad2.left_stick_button) {
             wrist.setPosition(wristUpPosition);
         } else if (gamepad2.right_stick_button) {
             subIntake.setPosition(subIntakeIn);
-        }*/
+        }
     }
     private void gripper_open() {
         gripper.setPosition(gripperOpenPosition);

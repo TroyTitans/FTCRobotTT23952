@@ -40,7 +40,7 @@ public class SimplifiedOdometryRobot {
 
     private static final double YAW_GAIN            = 0.018;    // Strength of Yaw position control
     private static final double YAW_ACCEL           = 3.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
-    private static final double YAW_TOLERANCE       = 5.0;     // Controller is is "inPosition" if position error is < +/- this amount
+    private static final double YAW_TOLERANCE       = 1.0;     // Controller is is "inPosition" if position error is < +/- this amount
     private static final double YAW_DEADBAND        = 0.25;    // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
     private static final double YAW_MAX_AUTO        = 0.6;     // "default" Maximum Yaw power limit during autonomous
 
@@ -90,7 +90,7 @@ public class SimplifiedOdometryRobot {
      *  Perform any set-up all the hardware devices.
      * @param showTelemetry  Set to true if you want telemetry to be displayed by the robot sensor/drive functions.
      */
-    public void initialize(boolean showTelemetry, boolean drive)
+    public void initialize(boolean showTelemetry)
     {
         // Initialize the hardware variables. Note that the strings used to 'get' each
         // motor/device must match the names assigned during the robot configuration.
@@ -306,7 +306,7 @@ public class SimplifiedOdometryRobot {
         while (myOpMode.opModeIsActive() && readSensors()){
 
             // implement desired axis powers
-            moveRobot(driveController.getOutput(driveDistance), (2*strafeController.getOutput(strafeDistance)), yawController.getOutput(heading));
+            moveRobot(driveController.getOutput(driveDistance), (strafePower*strafeController.getOutput(strafeDistance)), yawController.getOutput(heading));
 
             // Time to exit?
             if (strafeController.inPosition() && yawController.inPosition()) {

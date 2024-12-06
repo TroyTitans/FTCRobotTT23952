@@ -27,20 +27,20 @@ public class SimplifiedOdometryRobot {
     private final boolean INVERT_STRAFE_ODOMETRY = true;       //  When strafing to the LEFT, the odometry value MUST increase.  If it does not, flip the value of this constant.
 
     private static final double DRIVE_GAIN          = 0.03;    // Strength of axial position control
-    private static final double DRIVE_ACCEL         = 2.5;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
-    private static final double DRIVE_TOLERANCE     = 2.0;     // Controller is is "inPosition" if position error is < +/- this amount
-    private static final double DRIVE_DEADBAND      = 1.5;     // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
+    private static final double DRIVE_ACCEL         = 2.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
+    private static final double DRIVE_TOLERANCE     = 0.5;     // Controller is is "inPosition" if position error is < +/- this amount
+    private static final double DRIVE_DEADBAND      = 0.2;     // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
     private static final double DRIVE_MAX_AUTO      = 0.6;     // "default" Maximum Axial power limit during autonomous
 
     private static final double STRAFE_GAIN         = 0.03;    // Strength of lateral position control
     private static final double STRAFE_ACCEL        = 1.5;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
-    private static final double STRAFE_TOLERANCE    = 2.0;     // Controller is is "inPosition" if position error is < +/- this amount
-    private static final double STRAFE_DEADBAND     = 1.5;     // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
+    private static final double STRAFE_TOLERANCE    = 0.5;     // Controller is is "inPosition" if position error is < +/- this amount
+    private static final double STRAFE_DEADBAND     = 0.2;     // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
     private static final double STRAFE_MAX_AUTO     = 0.6;     // "default" Maximum Lateral power limit during autonomous
 
     private static final double YAW_GAIN            = 0.018;    // Strength of Yaw position control
     private static final double YAW_ACCEL           = 3.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
-    private static final double YAW_TOLERANCE       = 5.0;     // Controller is is "inPosition" if position error is < +/- this amount
+    private static final double YAW_TOLERANCE       = 1.0;     // Controller is is "inPosition" if position error is < +/- this amount
     private static final double YAW_DEADBAND        = 0.25;    // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
     private static final double YAW_MAX_AUTO        = 0.6;     // "default" Maximum Yaw power limit during autonomous
 
@@ -90,7 +90,7 @@ public class SimplifiedOdometryRobot {
      *  Perform any set-up all the hardware devices.
      * @param showTelemetry  Set to true if you want telemetry to be displayed by the robot sensor/drive functions.
      */
-    public void initialize(boolean showTelemetry, boolean drive)
+    public void initialize(boolean showTelemetry)
     {
         // Initialize the hardware variables. Note that the strings used to 'get' each
         // motor/device must match the names assigned during the robot configuration.
@@ -306,7 +306,7 @@ public class SimplifiedOdometryRobot {
         while (myOpMode.opModeIsActive() && readSensors()){
 
             // implement desired axis powers
-            moveRobot(driveController.getOutput(driveDistance), (2*strafeController.getOutput(strafeDistance)), yawController.getOutput(heading));
+            moveRobot(driveController.getOutput(driveDistance), (strafePower*strafeController.getOutput(strafeDistance)), yawController.getOutput(heading));
 
             // Time to exit?
             if (strafeController.inPosition() && yawController.inPosition()) {

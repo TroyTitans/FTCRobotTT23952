@@ -60,25 +60,33 @@ public class TroyTitansDeepTeleop extends LinearOpMode
     double wristUpPosition;
 
     double wristDeadBand;
+    double wristPower;
+    double subWristPower;
     double wristDropPosition;
     double wristDownPosition;
     int gripperClosedPosition;
     int gripperOpenPosition;
     double subIntakeIn;
+    float manualArmPower;
     int subIntakeOut;
     double subWristUp;
     double subWristDown;
+    boolean manualMode;
     boolean autoSlider;
     boolean autoSubSlider;
     double running;
+    int sliderDelay;
+    boolean turnOffSlider;
 
+    double armManualDeadband;
+    int armShutdownThreshold;
     private void init_variables() {
         // Slider Position
         sliderhangposition = 1400;
         // Vertical Slider Position
         SliderClosePosition = 0;
         SliderIntakePosition = 425;
-        SliderExtendPosition = 3600;
+        SliderExtendPosition = 3350;
 
         SliderSubIntakePosition = 1000;
         // Wrist on Vertical Slider Position
@@ -87,6 +95,8 @@ public class TroyTitansDeepTeleop extends LinearOpMode
         wristDownPosition = 0;  //Neeed to add a button
         wristDropPosition = 0.7;
         wristDeadBand = 0.03;
+        wristPower = 0;
+        subWristPower = 0;
         // Gripper on Vertical Slider Position
         gripperClosedPosition = 1;
         gripperOpenPosition = 0;
@@ -101,6 +111,7 @@ public class TroyTitansDeepTeleop extends LinearOpMode
         subWristDown = 1;
         subWristUp = 0;
         // Initiation
+        manualMode = false;
         autoSlider = false;
         autoSubSlider = false;
         running = 0;
@@ -109,7 +120,9 @@ public class TroyTitansDeepTeleop extends LinearOpMode
         sliderRunTime = new ElapsedTime();
         sliderSubRunTime = new ElapsedTime();
         sliderTimer = 2000;
+        sliderDelay = 800;
 
+        armManualDeadband = 0.03;
     }
     // get an instance of the "Robot" class.
     SimplifiedOdometryRobot robot = new SimplifiedOdometryRobot(this);
@@ -158,7 +171,7 @@ public class TroyTitansDeepTeleop extends LinearOpMode
             if(!autoSlider) {
                 slider.setPower(0);
             }
-            else if(autoSlider && (sliderRunTime.milliseconds() >= sliderTimer)) {
+            else if(autoSlider && (sliderRunTime.milliseconds() >= 2000)) {
                 slider.setPower(0);
                 sliderRunTime.reset();
                 autoSlider = false;
@@ -289,6 +302,14 @@ public class TroyTitansDeepTeleop extends LinearOpMode
         armRight.setPower(0);
     }
 
+    /*private void Slider_init() {
+
+        slider.setDirection(DcMotor.Direction.FORWARD);
+        slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        slider.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        slider.setPower(0);
+    }*/
     private void Slider_init() {
         slider.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         slider.setDirection(DcMotor.Direction.FORWARD);
@@ -405,7 +426,7 @@ public class TroyTitansDeepTeleop extends LinearOpMode
         }  else if (gamepad2.y) {
             //Drop Sample at high basket
             //increasing the slider timer since zero power behaviour for break is not working.
-            sliderTimer = 3000;
+            sliderTimer = 2000;
             setSliderPosition(SliderExtendPosition);
             wrist.setPosition(wristDropPosition);
             running = 1;
